@@ -1,0 +1,433 @@
+/* ============================================================
+   Root Access — Terminal Visual Layer
+   ============================================================ */
+
+/* ---- Reset & Base ---- */
+*, *::before, *::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --green: #33ff33;
+    --green-dim: #1a9e1a;
+    --bg: #0a0a0a;
+    --bg-light: #111;
+    --red: #ff3333;
+    --dark-red: #8b0000;
+    --yellow: #ffff33;
+    --cyan: #33ffff;
+    --white: #f0f0f0;
+    --gray: #777;
+    --font-mono: 'SF Mono', 'Fira Code', 'Cascadia Code', 'Consolas', 'Liberation Mono', monospace;
+    --font-size: 14px;
+    --line-height: 1.4;
+}
+
+html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: var(--bg);
+    color: var(--green);
+    font-family: var(--font-mono);
+    font-size: var(--font-size);
+    line-height: var(--line-height);
+    -webkit-text-size-adjust: 100%;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* ---- Selection ---- */
+::selection {
+    background: rgba(51, 255, 51, 0.3);
+    color: var(--white);
+}
+::-moz-selection {
+    background: rgba(51, 255, 51, 0.3);
+    color: var(--white);
+}
+
+/* ============================================================
+   Terminal Layout — flexbox column, full viewport
+   ============================================================ */
+#terminal {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100vh;
+    height: 100dvh; /* dynamic viewport for mobile */
+    position: relative;
+    overflow: hidden;
+    background: var(--bg);
+    transition: background-color 0.3s ease, filter 0.3s ease;
+}
+
+/* ---- Scrollable output area ---- */
+#output {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 12px 14px 4px;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    overscroll-behavior: contain;
+}
+
+/* Desktop: thin custom scrollbar */
+@media (pointer: fine) {
+    #output::-webkit-scrollbar {
+        width: 6px;
+    }
+    #output::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    #output::-webkit-scrollbar-thumb {
+        background: var(--green-dim);
+        border-radius: 3px;
+    }
+    #output::-webkit-scrollbar-thumb:hover {
+        background: var(--green);
+    }
+    /* Firefox */
+    #output {
+        scrollbar-width: thin;
+        scrollbar-color: var(--green-dim) transparent;
+    }
+}
+
+/* Mobile: hide scrollbar */
+@media (pointer: coarse) {
+    #output::-webkit-scrollbar {
+        display: none;
+    }
+    #output {
+        scrollbar-width: none;
+    }
+}
+
+/* ---- Output lines ---- */
+.output-line {
+    min-height: 1em;
+    padding: 0;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+/* ---- Input line (fixed at bottom) ---- */
+#input-line {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    padding: 6px 14px 12px;
+    background: var(--bg);
+    border-top: 1px solid #1a1a1a;
+    white-space: nowrap;
+    min-height: 36px;
+}
+
+#prompt {
+    color: var(--green);
+    flex-shrink: 0;
+    user-select: none;
+    transition: color 0.4s ease;
+}
+
+#command-input {
+    flex: 1 1 auto;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--green);
+    font-family: var(--font-mono);
+    font-size: inherit;
+    line-height: inherit;
+    caret-color: transparent; /* we use our own cursor */
+    padding: 0;
+    margin: 0;
+    width: 100%;
+    min-width: 0;
+}
+
+#command-input:disabled {
+    opacity: 0.5;
+}
+
+/* ---- Blinking block cursor ---- */
+#cursor {
+    color: var(--green);
+    font-weight: normal;
+    user-select: none;
+    opacity: 0;
+    transition: color 0.4s ease;
+}
+
+#cursor.blink {
+    animation: cursor-blink 1s step-end infinite;
+}
+
+@keyframes cursor-blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+}
+
+/* ---- Echo lines ---- */
+.input-echo {
+    color: var(--green);
+}
+.echo-prompt {
+    color: var(--green);
+    user-select: none;
+}
+.echo-command {
+    color: var(--green);
+}
+
+/* ============================================================
+   Text color classes
+   ============================================================ */
+.color-green  { color: var(--green); }
+.color-white  { color: var(--white); }
+.color-red    { color: var(--red); }
+.color-yellow { color: var(--yellow); }
+.color-cyan   { color: var(--cyan); }
+.color-gray   { color: var(--gray); }
+.color-magenta { color: #ff33ff; }
+
+/* ---- Semantic text classes ---- */
+.error    { color: var(--red); }
+.warning  { color: var(--yellow); }
+.system   { color: var(--cyan); }
+.dim      { color: var(--gray); }
+.highlight { color: var(--white); font-weight: bold; }
+.italic   { font-style: italic; }
+.blink    { animation: cursor-blink 1s step-end infinite; }
+.creepy   {
+    color: var(--dark-red);
+    text-shadow: 0 0 4px rgba(139, 0, 0, 0.6);
+    animation: creepy-jitter 4s ease-in-out infinite;
+}
+
+@keyframes creepy-jitter {
+    0%, 100% { transform: none; }
+    47%      { transform: none; }
+    48%      { transform: translateX(-1px) skewX(0.5deg); }
+    49%      { transform: translateX(1px) skewX(-0.3deg); }
+    50%      { transform: none; }
+}
+
+/* ============================================================
+   Mobile — "tap to type" overlay
+   ============================================================ */
+#mobile-keyboard-toggle {
+    display: none; /* shown via JS on mobile */
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 18px;
+    text-align: center;
+    background: rgba(51, 255, 51, 0.08);
+    border-top: 1px solid var(--green-dim);
+    color: var(--green);
+    font-family: var(--font-mono);
+    font-size: 16px;
+    cursor: pointer;
+    z-index: 100;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+#mobile-keyboard-toggle:active {
+    background: rgba(51, 255, 51, 0.18);
+}
+
+.mobile-only {
+    /* placeholder class for markup; visibility controlled by JS */
+}
+
+/* ============================================================
+   Mobile responsive
+   ============================================================ */
+@media (max-width: 768px) {
+    :root {
+        --font-size: 16px; /* prevents iOS auto-zoom on focus */
+    }
+
+    #output {
+        padding: 10px 10px 4px;
+    }
+
+    #input-line {
+        padding: 6px 10px 10px;
+    }
+}
+
+/* ============================================================
+   GLITCH / HORROR EFFECTS
+   ============================================================ */
+
+/* ---- .glitch — text jitter / displacement ---- */
+.glitch {
+    animation: glitch-anim 0.3s linear infinite;
+}
+
+@keyframes glitch-anim {
+    0%   { transform: translate(0); }
+    10%  { transform: translate(-2px, 1px); }
+    20%  { transform: translate(2px, -1px); }
+    30%  { transform: translate(-1px, 2px); }
+    40%  { transform: translate(1px, -2px); }
+    50%  { transform: translate(-2px, 0); }
+    60%  { transform: translate(2px, 1px); }
+    70%  { transform: translate(0, -1px); }
+    80%  { transform: translate(-1px, 0); }
+    90%  { transform: translate(1px, 1px); }
+    100% { transform: translate(0); }
+}
+
+/* ---- .flicker — screen flicker ---- */
+.flicker {
+    animation: flicker-anim 0.15s linear infinite;
+}
+
+@keyframes flicker-anim {
+    0%   { opacity: 1; }
+    25%  { opacity: 0.6; }
+    30%  { opacity: 1; }
+    50%  { opacity: 0.8; }
+    55%  { opacity: 1; }
+    70%  { opacity: 0.4; }
+    75%  { opacity: 1; }
+    100% { opacity: 0.9; }
+}
+
+/* ---- .corrupt — scrambled text appearance ---- */
+.corrupt {
+    animation: corrupt-anim 0.5s linear infinite;
+    letter-spacing: 2px;
+}
+
+@keyframes corrupt-anim {
+    0%   { transform: skewX(0deg); letter-spacing: 0; }
+    20%  { transform: skewX(2deg); letter-spacing: 3px; }
+    40%  { transform: skewX(-1deg); letter-spacing: 1px; }
+    60%  { transform: skewX(3deg); letter-spacing: 4px; }
+    80%  { transform: skewX(-2deg); letter-spacing: 0; }
+    100% { transform: skewX(0deg); letter-spacing: 0; }
+}
+
+/* ---- .shake — screen shake ---- */
+.shake {
+    animation: shake-anim 0.1s linear infinite;
+}
+
+@keyframes shake-anim {
+    0%   { transform: translate(0); }
+    25%  { transform: translate(4px, -3px); }
+    50%  { transform: translate(-3px, 2px); }
+    75%  { transform: translate(3px, 4px); }
+    100% { transform: translate(-2px, -2px); }
+}
+
+/* ---- .redshift — everything shifts to red tones ---- */
+.redshift {
+    filter: hue-rotate(-80deg) saturate(2) brightness(0.9);
+    transition: filter 0.3s ease;
+}
+
+/* ---- .scanlines — CRT scanline overlay ---- */
+.scanlines::after {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+    z-index: 9999;
+    background: repeating-linear-gradient(
+        to bottom,
+        transparent 0px,
+        transparent 2px,
+        rgba(0, 0, 0, 0.15) 2px,
+        rgba(0, 0, 0, 0.15) 4px
+    );
+    mix-blend-mode: multiply;
+}
+
+/* ---- .static — TV static noise ---- */
+.static::before {
+    content: '';
+    position: fixed;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    pointer-events: none;
+    z-index: 9998;
+    opacity: 0.08;
+    animation: static-anim 0.2s steps(8) infinite;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4'%3E%3Crect width='1' height='1' fill='white' x='0' y='0'/%3E%3Crect width='1' height='1' fill='white' x='2' y='2'/%3E%3C/svg%3E");
+    background-size: 4px 4px;
+}
+
+@keyframes static-anim {
+    0%   { transform: translate(0, 0); }
+    12%  { transform: translate(-5%, -10%); }
+    25%  { transform: translate(10%, 5%); }
+    37%  { transform: translate(-3%, 8%); }
+    50%  { transform: translate(7%, -5%); }
+    62%  { transform: translate(-8%, 3%); }
+    75%  { transform: translate(4%, -7%); }
+    87%  { transform: translate(-6%, 10%); }
+    100% { transform: translate(2%, -3%); }
+}
+
+/* ---- Screen flash overlay ---- */
+#flash-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+    z-index: 10000;
+    opacity: 0;
+    transition: opacity 0.05s ease;
+}
+
+/* ---- Crash black screen ---- */
+#crash-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: #000;
+    z-index: 10001;
+    display: none;
+}
+
+/* ---- Ghost typing indicator ---- */
+#command-input.ghost-typing {
+    color: var(--red);
+    animation: ghost-pulse 0.5s ease-in-out infinite alternate;
+}
+
+@keyframes ghost-pulse {
+    from { opacity: 0.6; }
+    to   { opacity: 1; }
+}
+
+/* ---- Glitch reveal character ---- */
+.glitch-char {
+    display: inline;
+    animation: glitch-char-anim 0.1s steps(1) 1;
+}
+
+@keyframes glitch-char-anim {
+    0%   { opacity: 0; transform: translateY(-2px); }
+    50%  { opacity: 1; color: var(--white); transform: translateY(1px); }
+    100% { opacity: 1; color: inherit; transform: translateY(0); }
+}
