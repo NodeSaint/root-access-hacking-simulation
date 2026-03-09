@@ -22,8 +22,6 @@
         var input       = document.getElementById('command-input');
         var prompt      = document.getElementById('prompt');
         var cursor      = document.getElementById('cursor');
-        var mobileToggle = document.getElementById('mobile-keyboard-toggle');
-
         // Bail out with an error if critical elements are missing
         if (!terminal || !output || !input || !prompt) {
             console.error('Root Access: missing required DOM elements.');
@@ -85,35 +83,9 @@
             Terminal.setPrompt(storyData.prompts[1]);
         }
 
-        // ---- Mobile handling ----
+        // ---- Focus handling ----
         if (isMobile) {
             document.body.classList.add('is-mobile');
-
-            if (mobileToggle) {
-                mobileToggle.style.display = 'block';
-
-                mobileToggle.addEventListener('click', function () {
-                    input.focus();
-                    this.style.display = 'none';
-                });
-
-                // Re-show the toggle if input blurs and we're still on mobile
-                input.addEventListener('blur', function () {
-                    // Small delay — blur fires before the next focus sometimes
-                    setTimeout(function () {
-                        if (document.activeElement !== input && mobileToggle) {
-                            mobileToggle.style.display = 'block';
-                        }
-                    }, 300);
-                });
-
-                // Hide toggle when input is focused
-                input.addEventListener('focus', function () {
-                    if (mobileToggle) {
-                        mobileToggle.style.display = 'none';
-                    }
-                });
-            }
         } else {
             // Desktop: auto-focus input
             input.focus();
