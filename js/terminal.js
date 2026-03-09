@@ -11,7 +11,6 @@
     var _prompt = null;
     var _cursor = null;
     var _inputLine = null;
-    var _mobileToggle = null;
     var _inputEnabled = true;
     var _commandQueue = [];
     var _busy = false;
@@ -30,7 +29,6 @@
             _prompt = promptEl;
             _cursor = cursorEl;
             _inputLine = inputEl.parentElement;
-            _mobileToggle = document.getElementById('mobile-keyboard-toggle');
 
             this._bindEvents();
             this.setInputEnabled(true);
@@ -299,28 +297,22 @@
                 self._syncCursor();
             });
 
-            // ---- Click anywhere on terminal to focus input ----
+            // ---- Click anywhere on terminal to focus input (desktop only) ----
             var terminalEl = _output.parentElement;
-            terminalEl.addEventListener('click', function (e) {
-                // Don't steal focus if user is selecting text
-                var sel = window.getSelection();
-                if (sel && sel.toString().length > 0) return;
-                if (_inputEnabled) _input.focus();
-            });
+            var isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ||
+                (navigator.maxTouchPoints > 0 && window.innerWidth < 1024);
 
-            // ---- Mobile toggle ----
-            if (_mobileToggle) {
-                _mobileToggle.addEventListener('click', function () {
-                    if (_inputEnabled) {
-                        _input.focus();
-                        // Some mobile browsers need a tiny delay
-                        setTimeout(function () { _input.focus(); }, 100);
-                    }
+            if (!isMobile) {
+                terminalEl.addEventListener('click', function (e) {
+                    var sel = window.getSelection();
+                    if (sel && sel.toString().length > 0) return;
+                    if (_inputEnabled) _input.focus();
                 });
+            }
 
-                // Also handle touchstart for more reliable mobile activation
-                _mobileToggle.addEventListener('touchstart', function (e) {
-                    e.preventDefault();
+            // ---- Mobile: only input-line taps bring up keyboard ----
+            if (isMobile && _inputLine) {
+                _inputLine.addEventListener('touchstart', function (e) {
                     if (_inputEnabled) {
                         _input.focus();
                     }
@@ -350,12 +342,6 @@
                 if (_cursor) _cursor.classList.remove('blink');
             });
 
-            // ---- Touch-to-focus on the terminal body (mobile) ----
-            terminalEl.addEventListener('touchstart', function () {
-                if (_inputEnabled) {
-                    _input.focus();
-                }
-            });
         },
 
         // ---------------------------------------------------------------
