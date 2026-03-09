@@ -11,6 +11,7 @@
     var _prompt = null;
     var _cursor = null;
     var _inputLine = null;
+    var _measure = null;
     var _inputEnabled = true;
     var _commandQueue = [];
     var _busy = false;
@@ -29,10 +30,12 @@
             _prompt = promptEl;
             _cursor = cursorEl;
             _inputLine = inputEl.parentElement;
+            _measure = document.getElementById('input-measure');
 
             this._bindEvents();
             this.setInputEnabled(true);
             this.scrollToBottom();
+            this._syncCursor();
         },
 
         // ---------------------------------------------------------------
@@ -147,6 +150,7 @@
         // ---------------------------------------------------------------
         setPrompt: function (promptText) {
             _prompt.textContent = promptText;
+            this._syncCursor();
         },
 
         // ---------------------------------------------------------------
@@ -225,6 +229,7 @@
             // Echo the command
             this._echoCommand(raw);
             _input.value = '';
+            this._syncCursor();
 
             // Push to history (skip duplicates of last entry, skip blanks)
             if (command && (this.history.length === 0 || this.history[this.history.length - 1] !== command)) {
@@ -279,6 +284,7 @@
                             self._echoCommand(_input.value + '^C');
                             _input.value = '';
                             self.historyIndex = -1;
+                            self._syncCursor();
                         }
                         break;
 
@@ -310,11 +316,24 @@
                 });
             }
 
-            // ---- Mobile: only input-line taps bring up keyboard ----
-            if (isMobile && _inputLine) {
-                _inputLine.addEventListener('touchstart', function (e) {
-                    if (_inputEnabled) {
+            // ---- Mobile: only deliberate taps on input-line bring up keyboard ----
+            if (isMobile) {
+                // Prevent the input from receiving focus on scroll touches
+                // by making it readonly until a deliberate tap on the input line
+                _input.setAttribute('readonly', 'readonly');
+
+                if (_inputLine) {
+                    _inputLine.addEventListener('touchend', function (e) {
+                        if (!_inputEnabled) return;
+                        // Remove readonly, focus, then re-add readonly on blur
+                        _input.removeAttribute('readonly');
                         _input.focus();
+                    });
+                }
+
+                _input.addEventListener('blur', function () {
+                    if (isMobile) {
+                        _input.setAttribute('readonly', 'readonly');
                     }
                 });
             }
@@ -360,6 +379,7 @@
 
             _input.value = this.history[this.historyIndex];
             this._moveCursorToEnd();
+            this._syncCursor();
         },
 
         _historyForward: function () {
@@ -375,6 +395,7 @@
             }
 
             this._moveCursorToEnd();
+            this._syncCursor();
         },
 
         _savedInput: '',
@@ -388,8 +409,13 @@
         },
 
         _syncCursor: function () {
-            // The CSS cursor overlay sits after the input;
-            // nothing dynamic needed unless we want per-character positioning.
+            if (!_measure || !_cursor || !_prompt) return;
+            // Measure the width of prompt + input text to position cursor
+            _measure.textContent = _input.value;
+            var promptWidth = _prompt.offsetWidth;
+            var textWidth = _measure.offsetWidth;
+            _cursor.style.position = 'absolute';
+            _cursor.style.left = (promptWidth + textWidth) + 'px';
         },
     };
 })();

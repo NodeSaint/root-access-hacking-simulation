@@ -124,6 +124,7 @@ html, body {
     border-top: 1px solid #1a1a1a;
     white-space: nowrap;
     min-height: 36px;
+    position: relative;
 }
 
 #prompt {
@@ -160,6 +161,18 @@ html, body {
     user-select: none;
     opacity: 0;
     transition: color 0.4s ease;
+    pointer-events: none;
+}
+
+/* Hidden span used to measure text width for cursor positioning */
+#input-measure {
+    position: absolute;
+    visibility: hidden;
+    white-space: pre;
+    font-family: var(--font-mono);
+    font-size: inherit;
+    line-height: inherit;
+    pointer-events: none;
 }
 
 #cursor.blink {
